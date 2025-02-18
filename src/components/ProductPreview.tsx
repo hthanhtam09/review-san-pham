@@ -15,7 +15,7 @@ interface ProductReviewProps {
 export default function ProductReview({ data }: ProductReviewProps) {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <h1 className="text-5xl font-bold text-white text-center">
+      <h1 className="text-5xl font-bold text-white text-center capitalize">
         {data.title}
       </h1>
 
