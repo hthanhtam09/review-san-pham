@@ -1,21 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BsSearch, BsFacebook, BsChevronDown } from "react-icons/bs";
-import { TfiEmail } from "react-icons/tfi";
+import { BsSearch, BsChevronDown } from "react-icons/bs";
 import { useTheme } from "next-themes";
 import { isMobile } from "react-device-detect";
-
-// import { EThemes } from "@/enum";
 import Search from "./Search";
 import NavbarItem from "./NavbarItem";
-// import IconTheme from "./IconTheme";
-// import AccountMenu from "./AccountUser";
-// import {
-//   convertToTitleCaseForDisplay,
-//   convertToTitleCaseForPath,
-// } from "@/utils/utils";
-// import useCurrentUser from "@/hooks/useCurrentUser";
+
 import Icon from "./Icon";
-// import Logo from './Logo';
 import { Bars4Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import {
@@ -24,8 +14,9 @@ import {
 } from "@/utils";
 import IconTheme from "./IconTheme";
 import { EThemes } from "@/enums";
-import { signOut } from "next-auth/react";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import AccountMenu from "./AccountUser";
+import Image from "next/image";
 
 const navbarItemListData = ["Trang_chủ"];
 
@@ -40,14 +31,6 @@ const Navbar: React.FC = () => {
 
   const isOpenSearch = useCallback(() => {
     setIsShowSearch((prev) => !prev);
-  }, []);
-
-  const isOpenFacebook = useCallback(() => {
-    window.location.href = "https://www.facebook.com/example";
-  }, []);
-
-  const isOpenEmail = useCallback(() => {
-    window.location.href = "mailto:example@gmail.com";
   }, []);
 
   const toggleAccountUser = useCallback(() => {
@@ -101,39 +84,26 @@ const Navbar: React.FC = () => {
             ))}
           </div>
           <div className="flex items-center ml-auto gap-8 lg:flex">
-            <Icon onClick={isOpenFacebook}>
-              <BsFacebook className="dark:text-white text-themeDark" />
-            </Icon>
-            <Icon onClick={isOpenEmail}>
-              <TfiEmail className="dark:text-white text-themeDark" />
-            </Icon>
             <Icon onClick={isOpenSearch}>
               <BsSearch className="dark:text-white text-themeDark" />
             </Icon>
             <Icon>
               <IconTheme />
             </Icon>
-            {currentUser && Object.keys(currentUser).length && (
-              <button
-                onClick={() => signOut()}
-                className="px-3 text-center dark:text-white text-themeDark text-sm hover:underline"
-              >
-                Đăng xuất
-              </button>
-            )}
-
-            {/* {userData ? (
+            {currentUser && Object.keys(currentUser).length ? (
               <div
                 className="flex flex-row items-center gap-2 cursor-pointer relative"
                 onClick={toggleAccountUser}
               >
                 <div className="overflow-hidden">
-                  <img
+                  <Image
                     className="w-8 rounded-2xl"
-                    src={`${
-                      userData.image ? userData.image : "/images/user.png"
-                    }`}
+                    src={
+                      currentUser.image ? currentUser.image : "/images/user.png"
+                    }
                     alt="Image_user"
+                    width={32}
+                    height={32}
                   />
                 </div>
                 <BsChevronDown
@@ -141,9 +111,9 @@ const Navbar: React.FC = () => {
                     showAccountUser ? "rotate-180" : "rotate-0"
                   }`}
                 />
-                <AccountMenu visible={showAccountUser} userData={userData} />
+                <AccountMenu visible={showAccountUser} userData={currentUser} />
               </div>
-            ) : null} */}
+            ) : null}
           </div>
         </div>
 
@@ -172,18 +142,22 @@ const Navbar: React.FC = () => {
                   height="40"
                 />
               </button>
-              {/* {userData ? (
+              {currentUser && Object.keys(currentUser).length ? (
                 <div
                   className="flex flex-row items-center gap-2 cursor-pointer relative"
                   onClick={toggleAccountUser}
                 >
                   <div className="overflow-hidden">
-                    <img
+                    <Image
                       className="w-8 rounded-2xl"
-                      src={`${
-                        userData.image ? userData.image : "/images/user.png"
-                      }`}
+                      src={
+                        currentUser.image
+                          ? currentUser.image
+                          : "/images/user.png"
+                      }
                       alt="Image_user"
+                      width={32}
+                      height={32}
                     />
                   </div>
                   <BsChevronDown
@@ -191,9 +165,12 @@ const Navbar: React.FC = () => {
                       showAccountUser ? "rotate-180" : "rotate-0"
                     } ${theme === EThemes.LIGHT ? "text-black" : "text-white"}`}
                   />
-                  <AccountMenu visible={showAccountUser} userData={userData} />
+                  <AccountMenu
+                    visible={showAccountUser}
+                    userData={currentUser}
+                  />
                 </div>
-              ) : null} */}
+              ) : null}
             </div>
           ) : (
             <button
@@ -218,15 +195,6 @@ const Navbar: React.FC = () => {
               key={item}
             />
           ))}
-          <hr className="bg-gray-600 border-0 h-px my-4" />
-          <div className="flex justify-center items-center gap-8 mt-6">
-            <Icon onClick={isOpenFacebook}>
-              <BsFacebook />
-            </Icon>
-            <Icon onClick={isOpenEmail}>
-              <TfiEmail />
-            </Icon>
-          </div>
         </div>
       </div>
       {isShowSearch && <Search isOpenSearch={isOpenSearch} />}
