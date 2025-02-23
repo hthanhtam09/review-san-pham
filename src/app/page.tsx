@@ -5,6 +5,7 @@ import Card from "@/components/Card";
 import FeaturedArticle from "@/components/FeaturedArticle";
 import ArticleList from "@/components/ArticleList";
 import ProductForm from "@/components/ProductForm";
+import useCurrentUser from "@/hooks/useCurrentUser";
 
 const Navbar = dynamic(() => import("@/components/Navbar"), { ssr: false });
 
@@ -85,11 +86,13 @@ const data = {
 };
 
 export default function Home() {
+  const { data: currentUser } = useCurrentUser();
+
   return (
     <div>
       <Navbar />
       <div className="max-w-6xl mx-auto p-6 mt-[10vh]">
-        <ProductForm />
+        {currentUser && Object.keys(currentUser).length && <ProductForm />}
         <h2 className="text-sm text-gray-500 uppercase tracking-widest">
           Must-Read Stories
         </h2>

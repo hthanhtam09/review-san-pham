@@ -24,13 +24,14 @@ import {
 } from "@/utils";
 import IconTheme from "./IconTheme";
 import { EThemes } from "@/enums";
+import { signOut } from "next-auth/react";
+import useCurrentUser from "@/hooks/useCurrentUser";
 
 const navbarItemListData = ["Trang_chủ"];
 
 const Navbar: React.FC = () => {
-  //   const { data: userData } = useCurrentUser();
+  const { data: currentUser } = useCurrentUser();
   const { theme } = useTheme();
-
   const [isShowSearch, setIsShowSearch] = useState<boolean>(false);
   const [showAccountUser, setShowAccountUser] = useState<boolean>(false);
   const [showNavbarMobile, setShowNavbarMobile] = useState<boolean>(false);
@@ -112,6 +113,15 @@ const Navbar: React.FC = () => {
             <Icon>
               <IconTheme />
             </Icon>
+            {currentUser && Object.keys(currentUser).length && (
+              <button
+                onClick={() => signOut()}
+                className="px-3 text-center dark:text-white text-themeDark text-sm hover:underline"
+              >
+                Đăng xuất
+              </button>
+            )}
+
             {/* {userData ? (
               <div
                 className="flex flex-row items-center gap-2 cursor-pointer relative"

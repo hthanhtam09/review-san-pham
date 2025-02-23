@@ -1,9 +1,16 @@
 "use client";
 
-import ProductReview from "@/components/ProductPreview";
 import { IProductReview } from "@/types/product";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import React from "react";
+
+const ProductReview = dynamic(
+  () => import("@/components/ProductPreview").then((res) => res.default),
+  {
+    ssr: false,
+  }
+);
 
 const data: IProductReview[] = [
   {

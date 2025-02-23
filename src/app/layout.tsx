@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Session } from "next-auth";
+
 import "./globals.css";
+import ClientContextProvider from "@/components/ClientContextProvider";
+
+export const metadata: Metadata = {
+  title: "Review",
+  description: "A place to review products",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,29 +20,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Review",
-  description: "A place to review products",
-};
-
 export default function RootLayout({
   children,
+  pageProps = { session: null },
 }: Readonly<{
   children: React.ReactNode;
+  pageProps: { session: Session | null };
 }>) {
+  const { session } = pageProps;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ClientContextProvider session={session}>
           {children}
-        </ThemeProvider>
+        </ClientContextProvider>
       </body>
     </html>
   );
