@@ -5,22 +5,17 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    if (!body.name || !body.description) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    }
-
-    let productReviewId = body.productReviewId;
-
-    if (!productReviewId) {
-      const newProductReview = await prisma.productReview.create({
-        data: { title: "Default Review" },
-      });
-      productReviewId = newProductReview.id;
+    if (!body.name || !body.description || !body.category) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
     const product = await prisma.product.create({
       data: {
         name: body.name,
+        category: body.category,
         description: body.description,
         videoReview: body.videoReview || null,
         images: {
@@ -33,8 +28,14 @@ export async function POST(req: Request) {
         prices: {
           create:
             body.prices?.map(
-              (price: { store: string; price: string; link: string }) => ({
+              (price: {
+                store: string;
+                storeName: string;
+                price: string;
+                link: string;
+              }) => ({
                 store: price.store,
+                storeName: price.storeName || "Unknown",
                 price: price.price,
                 link: price.link,
               })
@@ -48,18 +49,16 @@ export async function POST(req: Request) {
               name: tech.name,
             })) || [],
         },
-        productReviewId,
-        specs: body.specs
-          ? {
-              create: {
-                coolingArea: body.specs.coolingArea,
-                coolingCapacity: body.specs.coolingCapacity,
-                CEER: body.specs.CEER,
-                dimensions: body.specs.dimensions,
-                type: body.specs.type,
-              },
-            }
-          : undefined,
+        specifications: {
+          create:
+            body.specifications?.map(
+              (spec: { key: string; value: string }) => ({
+                key: spec.key,
+                value: spec.value,
+              })
+            ) || [],
+        },
+        productReviewId: body._id,
       },
     });
 
@@ -75,7 +74,15 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const products = await prisma.product.findMany();
+    const products = await prisma.product.findMany({
+      include: {
+        images: true,
+        prices: true,
+        technologies: true,
+        specifications: true,
+      },
+    });
+
     return NextResponse.json({ data: products }, { status: 200 });
   } catch (error) {
     console.error("Error fetching products:", error);

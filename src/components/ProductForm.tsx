@@ -1,196 +1,157 @@
 "use client";
 
+import { Product } from "@/types/product";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+interface FormData {
+  inputData: string;
+}
+
+const parseInput = (input: string): Product => {
+  const data = Object.fromEntries(
+    input
+      .split("\n")
+      .map((line) => {
+        const [key, ...value] = line.split(":");
+        return key && value.length
+          ? [key.trim().toLowerCase(), value.join(":").trim()]
+          : [];
+      })
+      .filter(Boolean)
+  );
+
+  const baseFields = [
+    "name",
+    "type",
+    "category",
+    "description",
+    "video",
+    "image",
+    "price",
+    "linkStore",
+    "pros",
+    "cons",
+  ];
+
+  return {
+    name: data.name || "",
+    type: data.type || "",
+    category: data.category || "",
+    description: data.description || "",
+    videoReview: data.video || "",
+    images: data.image ? [{ src: data.image, alt: "Product Image" }] : [],
+    prices: data.price
+      ? [
+          {
+            store: "Online Store",
+            price: data.price,
+            link: data.linkStore || "",
+          },
+        ]
+      : [],
+    pros: data.pros?.split(",").map((p: string) => p.trim()) || [],
+    cons: data.cons?.split(",").map((c: string) => c.trim()) || [],
+    specifications: Object.entries(data)
+      .filter(([key]) => !baseFields.includes(key))
+      .map(([key, value]) => ({ key, value: String(value) })),
+  };
+};
+
 export default function ProductForm() {
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [formState, setFormState] = useState({
+    showForm: false,
+    loading: false,
+    message: "",
+  });
 
-  const { register, handleSubmit, reset } = useForm<ProductFormData>();
+  const { register, handleSubmit, reset } = useForm<FormData>({
+    defaultValues: { inputData: "" },
+  });
 
-  interface ProductFormData {
-    name: string;
-    description: string;
-    videoReview?: string;
-    images?: string;
-    price?: string;
-    link?: string;
-    pros?: string;
-    cons?: string;
-    technologies?: string;
-    coolingArea?: string;
-    coolingCapacity?: string;
-    CEER?: string;
-    dimensions?: string;
-    type?: string;
-  }
+  const handleCancel = () => {
+    setFormState((prev) => ({ ...prev, showForm: false }));
+    reset();
+  };
 
-  const onSubmit = async (data: ProductFormData) => {
-    setLoading(true);
-    setMessage("");
+  const onSubmit = async (formData: FormData) => {
+    setFormState((prev) => ({ ...prev, loading: true, message: "" }));
 
     try {
+      const parsedData = parseInput(formData.inputData);
       const response = await fetch("/api/product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          description: data.description,
-          videoReview: data.videoReview || null,
-          images: data.images
-            ? [{ src: data.images, alt: "Product Image" }]
-            : [],
-          prices: data.price
-            ? [{ store: "Online Store", price: data.price, link: data.link }]
-            : [],
-          pros: data.pros ? data.pros.split(",") : [],
-          cons: data.cons ? data.cons.split(",") : [],
-          technologies: data.technologies ? [{ name: data.technologies }] : [],
-          specs: {
-            coolingArea: data.coolingArea,
-            coolingCapacity: data.coolingCapacity,
-            CEER: data.CEER,
-            dimensions: data.dimensions,
-            type: data.type,
-          },
-        }),
+        body: JSON.stringify(parsedData),
       });
 
       const result = await response.json();
-      if (response.ok) {
-        setMessage("Product added successfully!");
-        reset();
-        setShowForm(false);
-      } else {
-        setMessage(result.error || "Error adding product");
-      }
-    } catch {
-      setMessage("Error: Something went wrong");
-    }
+      setFormState((prev) => ({
+        ...prev,
+        loading: false,
+        message: response.ok
+          ? "Sản phẩm đã được thêm thành công!"
+          : result.error || "Lỗi khi thêm sản phẩm",
+        showForm: response.ok ? false : prev.showForm,
+      }));
 
-    setLoading(false);
+      if (response.ok) reset();
+    } catch {
+      setFormState((prev) => ({
+        ...prev,
+        loading: false,
+        message: "Lỗi: Đã xảy ra lỗi",
+      }));
+    }
   };
 
   return (
     <div className="max-w-lg mx-auto p-6">
-      {!showForm && (
+      {!formState.showForm ? (
         <button
-          onClick={() => setShowForm(true)}
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          onClick={() => setFormState((prev) => ({ ...prev, showForm: true }))}
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors"
         >
           + Thêm sản phẩm
         </button>
-      )}
-
-      {showForm && (
+      ) : (
         <div className="bg-white shadow-lg rounded-lg p-6 mt-4">
           <h2 className="text-2xl font-semibold mb-4">Thêm sản phẩm</h2>
 
-          {message && (
-            <p className="mb-4 text-center text-green-600">{message}</p>
+          {formState.message && (
+            <p
+              className={`mb-4 text-center ${
+                formState.message.includes("Lỗi")
+                  ? "text-red-600"
+                  : "text-green-600"
+              }`}
+            >
+              {formState.message}
+            </p>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <input
-              {...register("name", { required: true })}
-              placeholder="Tên sản phẩm"
-              className="w-full border p-2 rounded text-white"
-              required
-            />
-
             <textarea
-              {...register("description", { required: true })}
-              placeholder="Mô tả sản phẩm"
-              className="w-full border p-2 rounded text-white"
+              {...register("inputData", { required: true })}
+              placeholder={`Nhập dữ liệu theo mẫu:\nname: ...\ntype: ...\ncategory: ...\ndescription: ...\nVideo: ...\nimage: ...\nprice: ...\nlinkStore: ...\nThông số khác: ...`}
+              className="w-full border p-2 rounded text-black h-40 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
 
-            <input
-              {...register("videoReview")}
-              placeholder="URL video"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <input
-              {...register("images")}
-              placeholder="URL ảnh"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <input
-              {...register("price")}
-              placeholder="Giá"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <input
-              {...register("link")}
-              placeholder="Link cửa hàng"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <input
-              {...register("pros")}
-              placeholder="Ưu điểm (cách nhau bởi dấu phẩy)"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <input
-              {...register("cons")}
-              placeholder="Nhược điểm (cách nhau bởi dấu phẩy)"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <input
-              {...register("technologies")}
-              placeholder="Công nghệ (VD: Chip A17)"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <h3 className="text-lg font-semibold">Thông số kỹ thuật</h3>
-
-            <input
-              {...register("coolingArea")}
-              placeholder="Diện tích làm mát"
-              className="w-full border p-2 rounded text-white"
-            />
-            <input
-              {...register("coolingCapacity")}
-              placeholder="Công suất làm mát"
-              className="w-full border p-2 rounded text-white"
-            />
-            <input
-              {...register("CEER")}
-              placeholder="Hiệu suất CEER"
-              className="w-full border p-2 rounded text-white"
-            />
-            <input
-              {...register("dimensions")}
-              placeholder="Kích thước"
-              className="w-full border p-2 rounded text-white"
-            />
-            <input
-              {...register("type")}
-              placeholder="Loại sản phẩm"
-              className="w-full border p-2 rounded text-white"
-            />
-
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
-                className="bg-gray-400 text-white py-2 px-4 rounded hover:bg-gray-500"
+                onClick={handleCancel}
+                className="flex-1 bg-gray-400 text-white py-2 px-4 rounded hover:bg-gray-500 transition-colors"
               >
                 Hủy
               </button>
               <button
                 type="submit"
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-                disabled={loading}
+                disabled={formState.loading}
+                className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:bg-blue-300 transition-colors"
               >
-                {loading ? "Đang lưu..." : "Thêm sản phẩm"}
+                {formState.loading ? "Đang lưu..." : "Thêm sản phẩm"}
               </button>
             </div>
           </form>

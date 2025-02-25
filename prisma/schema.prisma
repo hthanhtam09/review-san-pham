@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,9 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Deal {
-  id      String   @id @default(uuid(7)) @map("_id")
+  id      String   @id @default(uuid()) @map("_id")
   title   String
   author  String
   date    DateTime
@@ -23,7 +16,7 @@ model Deal {
 }
 
 model Article {
-  id      String   @id @default(uuid(7)) @map("_id")
+  id      String   @id @default(uuid()) @map("_id")
   title   String
   author  String
   date    DateTime
@@ -31,14 +24,15 @@ model Article {
 }
 
 model ProductReview {
-   id      String   @id @default(uuid(7)) @map("_id")
+  id       String   @id @default(uuid()) @map("_id")
   title    String
   products Product[]
 }
 
 model Product {
-  id              String   @id @default(uuid(7)) @map("_id")
+  id              String   @id @default(uuid()) @map("_id")
   name            String
+  category        String 
   description     String
   videoReview     String?
   images          Image[]
@@ -46,13 +40,13 @@ model Product {
   pros            String[]
   cons            String[]
   technologies    Technology[]
-  specs           Specification?
-  productReviewId String
-  productReview   ProductReview @relation(fields: [productReviewId], references: [id])
+  specifications  Specification[] 
+  productReviewId String?
+  productReview   ProductReview? @relation(fields: [productReviewId], references: [id])
 }
 
 model Image {
-  id        String  @id @default(uuid(7)) @map("_id")
+  id        String  @id @default(uuid()) @map("_id")
   src       String
   alt       String
   productId String
@@ -60,38 +54,36 @@ model Image {
 }
 
 model Price {
-   id       String  @id @default(uuid(7)) @map("_id")
-  store     String
-  price     String
-  link      String
+  id       String  @id @default(uuid()) @map("_id")
+  store    String
+  storeName String
+  price    String
+  link     String
   productId String
   product   Product @relation(fields: [productId], references: [id])
 }
 
 model Technology {
-    id      String  @id @default(uuid(7)) @map("_id")
+  id        String  @id @default(uuid()) @map("_id")
   name      String
   productId String    
   product   Product @relation(fields: [productId], references: [id])
 }
 
 model Specification {
-  id              String   @id @default(uuid(7)) @map("_id")
-  coolingArea     String
-  coolingCapacity String
-  CEER            String
-  dimensions      String
-  type            String
-  productId       String  @unique
-  product         Product @relation(fields: [productId], references: [id])
+  id        String  @id @default(uuid()) @map("_id")
+  key       String
+  value     String
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model User {
-  id            String   @id @default(uuid()) @map("_id")
-  email         String   @unique
+  id             String   @id @default(uuid()) @map("_id")
+  email          String   @unique
   hashedPassword String
-  name          String?
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  name           String?
+  image          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
